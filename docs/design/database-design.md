@@ -1,118 +1,108 @@
-# Database Design
+# EntryPoint Database Design
 
 ## Overview
 
-EntryPoint will use PostgreSQL as the relational database. The database is designed to support student accounts, administrator accounts, onboarding checklists, campus resources, and webpage monitoring logs.
+EntryPoint will use PostgreSQL as the backend relational database. The schema is designed to be minimal, normalized, and avoid unnecessary redundancy. The initial version focuses on Texas State University, but the structure can later support expansion to additional universities.
 
-The design focuses on Texas State University for the initial version but keeps future multi-university expansion possible.
-
----
-
-## Main Tables
+## Tables
 
 ### users
 
-Stores account information for students and administrators.
+Stores login and account information.
 
-Fields:
-
-- id
-- first_name
-- last_name
-- email
-- password_hash
-- role
-- created_at
-
-Role values:
-
-- student
-- admin
+| Column        | Type         | Key         | Description           |
+| ------------- | ------------ | ----------- | --------------------- |
+| user_id       | SERIAL       | Primary Key | Unique user ID        |
+| first_name    | VARCHAR(100) |             | User first name       |
+| last_name     | VARCHAR(100) |             | User last name        |
+| email         | VARCHAR(255) | Unique      | User email            |
+| password_hash | VARCHAR(255) |             | Hashed password       |
+| role          | VARCHAR(20)  |             | student or admin      |
+| created_at    | TIMESTAMP    |             | Account creation date |
 
 ---
 
 ### student_profiles
 
-Stores student-specific information used to personalize onboarding checklists.
+Stores student-specific information. This table separates student profile data from login data to avoid mixing authentication information with student details.
 
-Fields:
+| Column           | Type         | Key                                   | Description                        |
+| ---------------- | ------------ | ------------------------------------- | ---------------------------------- |
+| profile_id       | SERIAL       | Primary Key                           | Unique profile ID                  |
+| user_id          | INTEGER      | Foreign Key references users(user_id) | Connected user                     |
+| student_type     | VARCHAR(50)  |                                       | freshman, transfer, graduate, etc. |
+| major            | VARCHAR(100) |                                       | Student major                      |
+| is_international | BOOLEAN      |                                       | Whether student is international   |
+| created_at       | TIMESTAMP    |                                       | Profile creation date              |
 
-- id
-- user_id
-- student_type
-- major
-- is_international
-- created_at
+Relationship:
 
-Example student types:
-
-- freshman
-- transfer
-- graduate
-- international
+* One user can have one student profile.
 
 ---
 
 ### resource_categories
 
-Stores categories used to organize Texas State resources.
+Stores resource categories.
 
-Fields:
-
-- id
-- name
-- description
+| Column      | Type         | Key         | Description          |
+| ----------- | ------------ | ----------- | -------------------- |
+| category_id | SERIAL       | Primary Key | Unique category ID   |
+| name        | VARCHAR(100) | Unique      | Category name        |
+| description | TEXT         |             | Category description |
 
 Example categories:
 
-- Admissions
-- Orientation
-- Housing
-- Financial Aid
-- Academic Advising
-- Registration
-- International Student Services
-- Technology Resources
-- Career Services
-- Student Organizations
+* Admissions
+* Orientation
+* Housing
+* Financial Aid
+* Academic Advising
+* Registration
+* International Student Services
+* Technology Resources
+* Career Services
 
 ---
 
 ### resources
 
-Stores Texas State resources shown to students.
+Stores official Texas State resources.
 
-Fields:
+| Column           | Type         | Key                                                     | Description             |
+| ---------------- | ------------ | ------------------------------------------------------- | ----------------------- |
+| resource_id      | SERIAL       | Primary Key                                             | Unique resource ID      |
+| category_id      | INTEGER      | Foreign Key references resource_categories(category_id) | Resource category       |
+| title            | VARCHAR(255) |                                                         | Resource title          |
+| description      | TEXT         |                                                         | Resource description    |
+| url              | TEXT         |                                                         | Official resource URL   |
+| last_reviewed_at | TIMESTAMP    |                                                         | Last manual review date |
+| created_at       | TIMESTAMP    |                                                         | Resource creation date  |
 
-- id
-- category_id
-- title
-- description
-- url
-- student_type_relevance
-- last_reviewed_at
-- created_at
+Relationship:
+
+* One category can have many resources.
 
 ---
 
 ### checklist_templates
 
-Stores reusable onboarding checklist templates.
+Stores reusable checklist templates.
 
-Fields:
-
-- id
-- name
-- description
-- student_type
-- is_international
-- created_at
+| Column           | Type         | Key         | Description                                    |
+| ---------------- | ------------ | ----------- | ---------------------------------------------- |
+| template_id      | SERIAL       | Primary Key | Unique template ID                             |
+| name             | VARCHAR(255) |             | Template name                                  |
+| description      | TEXT         |             | Template description                           |
+| student_type     | VARCHAR(50)  |             | freshman, transfer, graduate, etc.             |
+| is_international | BOOLEAN      |             | Whether template is for international students |
+| created_at       | TIMESTAMP    |             | Template creation date                         |
 
 Example templates:
 
-- New Freshman Checklist
-- Transfer Student Checklist
-- International Student Checklist
+* New Freshman Checklist
+* Transfer Student Checklist
+* International Student Checklist
 
 ---
 
@@ -120,57 +110,63 @@ Example templates:
 
 Stores tasks that belong to checklist templates.
 
-Fields:
+| Column      | Type         | Key                                                     | Description                             |
+| ----------- | ------------ | ------------------------------------------------------- | --------------------------------------- |
+| task_id     | SERIAL       | Primary Key                                             | Unique task ID                          |
+| template_id | INTEGER      | Foreign Key references checklist_templates(template_id) | Parent checklist template               |
+| resource_id | INTEGER      | Foreign Key references resources(resource_id), nullable | Related resource                        |
+| title       | VARCHAR(255) |                                                         | Task title                              |
+| description | TEXT         |                                                         | Task details                            |
+| priority    | VARCHAR(20)  |                                                         | low, medium, or high                    |
+| due_stage   | VARCHAR(50)  |                                                         | before_arrival, first_week, first_month |
+| created_at  | TIMESTAMP    |                                                         | Task creation date                      |
 
-- id
-- template_id
-- resource_id
-- title
-- description
-- priority
-- due_stage
-- created_at
+Relationship:
 
-Example priority values:
-
-- low
-- medium
-- high
-
-Example due stages:
-
-- before_arrival
-- first_week
-- first_month
+* One checklist template can have many checklist tasks.
+* One checklist task may link to one resource.
 
 ---
 
 ### student_task_completion
 
-Tracks which checklist tasks each student has completed.
+Tracks which tasks a student has completed.
 
-Fields:
+| Column        | Type      | Key                                                 | Description                 |
+| ------------- | --------- | --------------------------------------------------- | --------------------------- |
+| completion_id | SERIAL    | Primary Key                                         | Unique completion record ID |
+| profile_id    | INTEGER   | Foreign Key references student_profiles(profile_id) | Student profile             |
+| task_id       | INTEGER   | Foreign Key references checklist_tasks(task_id)     | Completed task              |
+| is_completed  | BOOLEAN   |                                                     | Completion status           |
+| completed_at  | TIMESTAMP |                                                     | Date completed              |
 
-- id
-- student_profile_id
-- task_id
-- is_completed
-- completed_at
+Constraint:
+
+* Unique(profile_id, task_id)
+
+Relationship:
+
+* One student profile can have many task completion records.
+* One checklist task can appear in many student completion records.
 
 ---
 
 ### monitored_pages
 
-Stores Texas State webpages that the system monitors for changes.
+Stores Texas State webpages selected for change monitoring.
 
-Fields:
+| Column          | Type         | Key                                                     | Description                  |
+| --------------- | ------------ | ------------------------------------------------------- | ---------------------------- |
+| page_id         | SERIAL       | Primary Key                                             | Unique page ID               |
+| category_id     | INTEGER      | Foreign Key references resource_categories(category_id) | Related category             |
+| title           | VARCHAR(255) |                                                         | Page title                   |
+| url             | TEXT         | Unique                                                  | Page URL                     |
+| last_checked_at | TIMESTAMP    |                                                         | Last monitoring check        |
+| active          | BOOLEAN      |                                                         | Whether monitoring is active |
 
-- id
-- title
-- url
-- category_id
-- last_checked_at
-- active
+Relationship:
+
+* One category can have many monitored pages.
 
 ---
 
@@ -178,37 +174,41 @@ Fields:
 
 Stores detected webpage changes.
 
-Fields:
+| Column                | Type         | Key                                             | Description                       |
+| --------------------- | ------------ | ----------------------------------------------- | --------------------------------- |
+| change_id             | SERIAL       | Primary Key                                     | Unique change record ID           |
+| page_id               | INTEGER      | Foreign Key references monitored_pages(page_id) | Monitored page                    |
+| previous_content_hash | VARCHAR(255) |                                                 | Hash of previous content          |
+| new_content_hash      | VARCHAR(255) |                                                 | Hash of new content               |
+| change_summary        | TEXT         |                                                 | Summary of detected change        |
+| importance_level      | VARCHAR(20)  |                                                 | low, medium, or high              |
+| detected_at           | TIMESTAMP    |                                                 | Date change was detected          |
+| reviewed_by_admin     | BOOLEAN      |                                                 | Whether admin reviewed the change |
 
-- id
-- monitored_page_id
-- previous_content_hash
-- new_content_hash
-- change_summary
-- importance_level
-- detected_at
-- reviewed_by_admin
+Relationship:
 
-Example importance levels:
+* One monitored page can have many change logs.
 
-- low
-- medium
-- high
+## Normalization Notes
 
----
+The schema avoids redundancy by separating repeated information into separate tables.
 
-## Relationships
+Examples:
 
-- One user can have one student profile.
-- One resource category can have many resources.
-- One resource category can have many monitored pages.
-- One checklist template can have many checklist tasks.
-- One checklist task can be connected to one resource.
-- One student profile can have many task completion records.
-- One monitored page can have many page change logs.
+* Resource category names are stored only in `resource_categories`, not repeated directly in each resource.
+* User login information is stored in `users`, while student-specific information is stored in `student_profiles`.
+* Checklist templates are separated from checklist tasks.
+* Student task completion is stored separately so checklist tasks are not duplicated for every student.
+* Monitored pages are separated from page change logs so each page can have multiple historical change records.
 
----
+## Future Expansion
 
-## Future Expansion Consideration
+For future multi-university support, a `universities` table can be added:
 
-Although the first version focuses on Texas State University, the database can later be expanded by adding a `universities` table and connecting resources, checklist templates, and monitored pages to a university ID.
+| Column        | Type         | Key         | Description          |
+| ------------- | ------------ | ----------- | -------------------- |
+| university_id | SERIAL       | Primary Key | Unique university ID |
+| name          | VARCHAR(255) | Unique      | University name      |
+| website_url   | TEXT         |             | University website   |
+
+Then `resources`, `checklist_templates`, and `monitored_pages` can reference `universities(university_id)`.
