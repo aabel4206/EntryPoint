@@ -32,6 +32,9 @@ class StudentProfile(Base):
     user = relationship("User", back_populates="student_profile")
     task_completions = relationship("StudentTaskCompletion", back_populates="student_profile")
 
+    subscriptions = relationship("StudentResourceSubscription", back_populates="student_profile")
+    notifications = relationship("Notification", back_populates="student_profile")
+
 
 class ResourceCategory(Base):
     __tablename__ = "resource_categories"
@@ -129,3 +132,31 @@ class PageChangeLog(Base):
     reviewed_by_admin = Column(Boolean, nullable=False, default=False)
 
     monitored_page = relationship("MonitoredPage", back_populates="change_logs")
+
+class StudentResourceSubscription(Base):
+    __tablename__ = "student_resource_subscriptions"
+
+    subscription_id = Column(Integer, primary_key=True, index=True)
+    profile_id = Column(Integer, ForeignKey("student_profiles.profile_id"), nullable=False)
+    resource_id = Column(Integer, ForeignKey("resources.resource_id"), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    student_profile = relationship("StudentProfile")
+    resource = relationship("Resource")
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    notification_id = Column(Integer, primary_key=True, index=True)
+    profile_id = Column(Integer, ForeignKey("student_profiles.profile_id"), nullable=False)
+    resource_id = Column(Integer, ForeignKey("resources.resource_id"), nullable=True)
+    change_id = Column(Integer, ForeignKey("page_change_logs.change_id"), nullable=True)
+    title = Column(String(255), nullable=False)
+    message = Column(Text, nullable=False)
+    is_read = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    student_profile = relationship("StudentProfile")
+    resource = relationship("Resource")
+    change_log = relationship("PageChangeLog")

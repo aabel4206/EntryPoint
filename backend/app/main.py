@@ -5,6 +5,9 @@ from app import models
 from app.routes import resources
 from app.routes import checklists
 from app.routes import monitoring
+from app.routes import subscriptions
+from app.routes import notifications
+from app.routes import users
 
 Base.metadata.create_all(bind=engine)
 
@@ -17,6 +20,9 @@ app = FastAPI(
 app.include_router(resources.router)
 app.include_router(checklists.router)
 app.include_router(monitoring.router)
+app.include_router(subscriptions.router)
+app.include_router(notifications.router)
+app.include_router(users.router)
 
 
 @app.get("/")

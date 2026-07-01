@@ -37,3 +37,31 @@ class ResourceResponse(ResourceBase):
 
     class Config:
         from_attributes = True
+
+class SubscriptionCreate(BaseModel):
+    profile_id: int
+    resource_id: int
+
+
+class SubscriptionResponse(BaseModel):
+    subscription_id: int
+    profile_id: int
+    resource_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class NotificationResponse(BaseModel):
+    notification_id: int
+    profile_id: int
+    resource_id: Optional[int] = None
+    change_id: Optional[int] = None
+    title: str
+    message: str
+    is_read: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
