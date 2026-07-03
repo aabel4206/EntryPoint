@@ -132,3 +132,13 @@ The project must produce:
 * A written report.
 * A final presentation and demonstration.
 * Evaluation of the webpage monitoring component.
+
+## Transportation Resource Categories
+
+- Campus Shuttle
+- Parking Services
+- Public Transportation
+- Ride Sharing
+- Driver Licensing
+- Campus Maps
+- Transportation Safety

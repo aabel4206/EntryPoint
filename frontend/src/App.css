@@ -1,0 +1,68 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f6f8;
+  color: #222;
+}
+
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+h1 {
+  margin-bottom: 0;
+}
+
+.subtitle {
+  color: #555;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  margin-top: 20px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
+button {
+  padding: 8px 14px;
+  margin-top: 8px;
+  cursor: pointer;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: white;
+}
+
+button:hover {
+  background: #eee;
+}
+
+.resource {
+  border-top: 1px solid #ddd;
+  padding-top: 14px;
+  margin-top: 14px;
+}
+
+.button-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.notification {
+  border-left: 4px solid #333;
+  background: #f1f1f1;
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.status {
+  background: #222;
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 20px;
+}

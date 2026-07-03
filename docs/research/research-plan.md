@@ -12,7 +12,7 @@ This project investigates whether AI-assisted webpage monitoring can improve the
 
 ## Research Question
 
-Can AI-assisted monitoring of Texas State University webpages improve the accuracy and timeliness of student resource information?
+Can a personalized transportation onboarding framework improve transportation resource accessibility and onboarding effectiveness for international students compared to a generic onboarding approach?
 
 ## Objectives
 
@@ -52,3 +52,7 @@ Future research may include:
 - More advanced AI summarization.
 - Automated importance classification.
 - Student notification systems.
+
+## Research Contribution
+
+The contribution of this project is the design and evaluation of a personalized transportation onboarding framework that adapts onboarding tasks and resources to the transition needs of international students.

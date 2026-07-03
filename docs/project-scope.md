@@ -6,11 +6,13 @@ EntryPoint
 
 ## Project Overview
 
-EntryPoint is a full-stack web application designed to help new Texas State University students navigate onboarding tasks, academic resources, and campus services through a centralized and structured platform.
+EntryPoint is a personalized transportation onboarding framework designed to help international students navigate transportation-related resources and services at Texas State University.
 
-The system focuses on helping students identify important university requirements, locate relevant resources, and complete onboarding activities using personalized checklists and guided workflows.
+The system provides transportation onboarding checklists, transportation resource recommendations, and transportation resource monitoring. Texas State University serves as the pilot environment for evaluating the framework.
 
-The project is being developed as part of a CS 4395 Independent Study and includes both a software engineering component and a limited applied AI research component.
+## Research Focus
+
+The project investigates whether personalized transportation onboarding can provide a more effective onboarding experience for international students than a traditional one-size-fits-all onboarding approach.
 
 ## Target Users
 
