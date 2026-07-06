@@ -65,3 +65,37 @@ class NotificationResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class MonitoredPageCreate(BaseModel):
+    resource_id: int
+    category_id: int
+    title: str
+    url: str
+
+
+class MonitoredPageResponse(BaseModel):
+    page_id: int
+    resource_id: int
+    category_id: int
+    title: str
+    url: str
+    last_content_hash: Optional[str] = None
+    last_checked_at: Optional[datetime] = None
+    active: bool
+
+    class Config:
+        from_attributes = True
+
+
+class PageChangeLogResponse(BaseModel):
+    change_id: int
+    page_id: int
+    previous_content_hash: Optional[str] = None
+    new_content_hash: str
+    change_summary: Optional[str] = None
+    importance_level: str
+    detected_at: datetime
+    reviewed_by_admin: bool
+
+    class Config:
+        from_attributes = True

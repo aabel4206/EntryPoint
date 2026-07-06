@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 
 const API_BASE = "http://127.0.0.1:8001";
@@ -7,27 +7,43 @@ function App() {
   const [profileId, setProfileId] = useState(null);
   const [resources, setResources] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [message, setMessage] = useState("");
+  const [monitoredPages, setMonitoredPages] = useState([]);
+  const [changes, setChanges] = useState([]);
+  const [status, setStatus] = useState("");
 
   async function createDemoStudent() {
-    const res = await fetch(`${API_BASE}/api/demo/student`, {
-      method: "POST",
-    });
+    const res = await fetch(`${API_BASE}/api/demo/student`, { method: "POST" });
     const data = await res.json();
     setProfileId(data.profile_id);
-    setMessage(`Demo international student loaded. Profile ID: ${data.profile_id}`);
+    setStatus(`Demo international student loaded. Profile ID: ${data.profile_id}`);
   }
 
   async function loadResources() {
     const res = await fetch(`${API_BASE}/api/resources/`);
     const data = await res.json();
     setResources(data);
-    setMessage("Transportation resources loaded.");
+  }
+
+  async function loadNotifications(id = profileId) {
+    if (!id) return;
+    const res = await fetch(`${API_BASE}/api/notifications/${id}`);
+    const data = await res.json();
+    setNotifications(data);
+  }
+
+  async function loadMonitoringData() {
+    const pagesRes = await fetch(`${API_BASE}/api/monitoring/pages`);
+    const pagesData = await pagesRes.json();
+    setMonitoredPages(pagesData);
+
+    const changesRes = await fetch(`${API_BASE}/api/monitoring/changes`);
+    const changesData = await changesRes.json();
+    setChanges(changesData);
   }
 
   async function subscribe(resourceId) {
     if (!profileId) {
-      setMessage("Create/load demo student first.");
+      setStatus("Load the demo student first.");
       return;
     }
 
@@ -43,118 +59,222 @@ function App() {
     });
 
     const data = await res.json();
-    setMessage(`Subscribed to resource ID ${data.resource_id}.`);
+    setStatus(`Subscribed to resource ID ${data.resource_id}.`);
   }
 
-  async function simulateChange(resourceId) {
-    const res = await fetch(`${API_BASE}/api/monitoring/demo-change/${resourceId}`, {
+  async function addMonitoredPage(resource) {
+    const res = await fetch(`${API_BASE}/api/monitoring/pages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        resource_id: resource.resource_id,
+        category_id: resource.category_id,
+        title: resource.title,
+        url: resource.url,
+      }),
+    });
+
+    const data = await res.json();
+    setStatus(`Monitoring enabled for ${data.title}.`);
+    loadMonitoringData();
+  }
+
+  async function checkPage(pageId) {
+    const res = await fetch(`${API_BASE}/api/monitoring/check/${pageId}`, {
       method: "POST",
     });
 
     const data = await res.json();
-    setMessage(
-      `Change simulated for ${data.resource_title}. Notifications created: ${data.created_notifications.length}`
+    setStatus(
+      data.changed
+        ? `Change detected. Notifications created: ${data.created_notifications.length}`
+        : data.message
     );
+
+    loadMonitoringData();
+    loadNotifications();
   }
 
-  async function loadNotifications() {
-    if (!profileId) {
-      setMessage("Create/load demo student first.");
-      return;
-    }
-
-    const res = await fetch(`${API_BASE}/api/notifications/${profileId}`);
-    const data = await res.json();
-    setNotifications(data);
-    setMessage("Notifications loaded.");
-  }
+  useEffect(() => {
+    loadResources();
+    loadMonitoringData();
+  }, []);
 
   return (
-    <div className="page">
-      <h1>EntryPoint</h1>
-      <h2>Personalized Onboarding Framework</h2>
-      <p className="subtitle">
-        Transportation pilot with accommodation scalability.
-      </p>
+    <div className="app">
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-icon">E</div>
+          <div>
+            <h1>EntryPoint</h1>
+            <p>Personalized onboarding</p>
+          </div>
+        </div>
 
-      <section className="card">
-        <h3>1. Demo Student</h3>
-        <p>
-          Load a demo international student profile to test personalized onboarding.
-        </p>
-        <button onClick={createDemoStudent}>Load Demo International Student</button>
-        {profileId && <p>Current Profile ID: {profileId}</p>}
-      </section>
+        <nav>
+          <a href="#dashboard">Dashboard</a>
+          <a href="#transportation">Transportation</a>
+          <a href="#accommodation">Accommodation</a>
+          <a href="#monitoring">Monitoring</a>
+          <a href="#notifications">Notifications</a>
+          <a href="#evaluation">Evaluation</a>
+        </nav>
+      </aside>
 
-      <section className="card">
-        <h3>2. Transportation Resources</h3>
-        <p>
-          These resources come from the FastAPI backend and PostgreSQL database.
-        </p>
-        <button onClick={loadResources}>Load Resources</button>
+      <main className="main">
+        <section id="dashboard" className="hero">
+          <div>
+            <p className="eyebrow">International Student Pilot</p>
+            <h2>Personalized onboarding that adapts to each student.</h2>
+            <p>
+              EntryPoint connects student needs, onboarding resources, webpage monitoring,
+              and personalized notifications into one framework.
+            </p>
+            <button onClick={createDemoStudent}>Load Demo Student</button>
+            {profileId && <span className="pill">Profile ID: {profileId}</span>}
+          </div>
 
-        <div className="resource-list">
-          {resources.map((resource) => (
-            <div key={resource.resource_id} className="resource">
-              <h4>{resource.title}</h4>
-              <p>{resource.description}</p>
-              <a href={resource.url} target="_blank" rel="noreferrer">
-                Open Resource
-              </a>
-              <div className="button-row">
-                <button onClick={() => subscribe(resource.resource_id)}>
-                  Subscribe
-                </button>
-                <button onClick={() => simulateChange(resource.resource_id)}>
-                  Simulate Change
+          <div className="hero-card">
+            <h3>Framework Flow</h3>
+            <p>Student → Resource Subscription → Monitoring → Notification</p>
+          </div>
+        </section>
+
+        <section id="transportation" className="section">
+          <div className="section-header">
+            <div>
+              <p className="eyebrow">Pilot Domain</p>
+              <h2>Transportation Onboarding</h2>
+            </div>
+          </div>
+
+          <div className="checklist">
+            <div>✓ Learn Bobcat Shuttle system</div>
+            <div>✓ Review campus maps</div>
+            <div>✓ Understand ride-sharing options</div>
+            <div>✓ Review transportation safety</div>
+            <div>✓ Review Texas driver license information</div>
+          </div>
+
+          <div className="grid">
+            {resources.map((resource) => (
+              <div className="card" key={resource.resource_id}>
+                <h3>{resource.title}</h3>
+                <p>{resource.description}</p>
+                <a href={resource.url} target="_blank" rel="noreferrer">
+                  Open official resource
+                </a>
+                <div className="actions">
+                  <button onClick={() => subscribe(resource.resource_id)}>
+                    Subscribe
+                  </button>
+                  <button className="secondary" onClick={() => addMonitoredPage(resource)}>
+                    Monitor
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="accommodation" className="section">
+          <p className="eyebrow">Scalability Domain</p>
+          <h2>Accommodation Onboarding</h2>
+          <p>
+            The same framework can scale beyond transportation by replacing the domain
+            resources, templates, and monitored webpages.
+          </p>
+
+          <div className="grid">
+            {[
+              "Residence Life",
+              "Off-Campus Housing",
+              "Lease Guidance",
+              "Utilities Setup",
+              "Move-In Checklist",
+              "Roommate Guidance",
+            ].map((item) => (
+              <div className="card mini" key={item}>
+                <h3>{item}</h3>
+                <p>Accommodation onboarding module example.</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="monitoring" className="section">
+          <p className="eyebrow">Automatic Monitoring</p>
+          <h2>Monitored Pages</h2>
+
+          <div className="grid">
+            {monitoredPages.map((page) => (
+              <div className="card" key={page.page_id}>
+                <h3>{page.title}</h3>
+                <p>{page.url}</p>
+                <p className="muted">
+                  Last checked: {page.last_checked_at || "Not checked yet"}
+                </p>
+                <button onClick={() => checkPage(page.page_id)}>
+                  Check for Updates
                 </button>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="card">
-        <h3>3. Personalized Notifications</h3>
-        <p>
-          If a subscribed transportation resource changes, the student receives a
-          personalized notification.
-        </p>
-        <button onClick={loadNotifications}>Load Notifications</button>
-
-        {notifications.map((notification) => (
-          <div key={notification.notification_id} className="notification">
-            <strong>{notification.title}</strong>
-            <p>{notification.message}</p>
-            <small>Read: {notification.is_read ? "Yes" : "No"}</small>
+            ))}
           </div>
-        ))}
-      </section>
 
-      <section className="card">
-        <h3>4. Accommodation Scalability Example</h3>
-        <p>
-          The same framework can later support accommodation onboarding by
-          replacing transportation resources with housing resources, lease
-          information, move-in requirements, utilities, and roommate guidance.
-        </p>
-        <ul>
-          <li>Residence Life</li>
-          <li>Off-Campus Housing</li>
-          <li>Lease and utility guidance</li>
-          <li>Move-in checklist</li>
-        </ul>
-      </section>
+          <h3 className="subheading">Change History</h3>
+          {changes.length === 0 ? (
+            <p className="muted">No detected changes yet.</p>
+          ) : (
+            changes.map((change) => (
+              <div className="notice" key={change.change_id}>
+                <strong>Change #{change.change_id}</strong>
+                <p>{change.change_summary}</p>
+                <small>{change.detected_at}</small>
+              </div>
+            ))
+          )}
+        </section>
 
-      <section className="card">
-        <h3>5. Feedback</h3>
-        <p>
-          After testing EntryPoint, students can complete a short feedback survey
-          comparing this framework to existing university webpages.
-        </p>
-      </section>
+        <section id="notifications" className="section">
+          <div className="section-header">
+            <div>
+              <p className="eyebrow">Personalized Alerts</p>
+              <h2>Student Notifications</h2>
+            </div>
+            <button onClick={() => loadNotifications()}>Refresh Notifications</button>
+          </div>
 
-      {message && <p className="status">{message}</p>}
+          {notifications.length === 0 ? (
+            <p className="muted">No notifications yet.</p>
+          ) : (
+            notifications.map((notification) => (
+              <div className="notice" key={notification.notification_id}>
+                <strong>{notification.title}</strong>
+                <p>{notification.message}</p>
+                <small>
+                  Read: {notification.is_read ? "Yes" : "No"} · {notification.created_at}
+                </small>
+              </div>
+            ))
+          )}
+        </section>
+
+        <section id="evaluation" className="section">
+          <p className="eyebrow">Research Evaluation</p>
+          <h2>Student Feedback</h2>
+          <p>
+            Participants compare existing Texas State webpages with EntryPoint and
+            provide feedback on ease of use, clarity, confidence, and preference.
+          </p>
+          <a className="survey-button" href="#" target="_blank" rel="noreferrer">
+            Complete Feedback Survey
+          </a>
+        </section>
+
+        {status && <div className="toast">{status}</div>}
+      </main>
     </div>
   );
 }

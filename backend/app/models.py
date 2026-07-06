@@ -109,13 +109,16 @@ class MonitoredPage(Base):
     __tablename__ = "monitored_pages"
 
     page_id = Column(Integer, primary_key=True, index=True)
+    resource_id = Column(Integer, ForeignKey("resources.resource_id"), nullable=False)
     category_id = Column(Integer, ForeignKey("resource_categories.category_id"), nullable=False)
     title = Column(String(255), nullable=False)
     url = Column(Text, unique=True, nullable=False)
+    last_content_hash = Column(String(255), nullable=True)
     last_checked_at = Column(DateTime(timezone=True), nullable=True)
     active = Column(Boolean, nullable=False, default=True)
 
     category = relationship("ResourceCategory", back_populates="monitored_pages")
+    resource = relationship("Resource")
     change_logs = relationship("PageChangeLog", back_populates="monitored_page")
 
 
@@ -127,12 +130,11 @@ class PageChangeLog(Base):
     previous_content_hash = Column(String(255), nullable=True)
     new_content_hash = Column(String(255), nullable=False)
     change_summary = Column(Text, nullable=True)
-    importance_level = Column(String(20), nullable=False, default="low")
+    importance_level = Column(String(20), nullable=False, default="medium")
     detected_at = Column(DateTime(timezone=True), server_default=func.now())
     reviewed_by_admin = Column(Boolean, nullable=False, default=False)
 
     monitored_page = relationship("MonitoredPage", back_populates="change_logs")
-
 class StudentResourceSubscription(Base):
     __tablename__ = "student_resource_subscriptions"
 
