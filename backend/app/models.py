@@ -114,6 +114,7 @@ class MonitoredPage(Base):
     title = Column(String(255), nullable=False)
     url = Column(Text, unique=True, nullable=False)
     last_content_hash = Column(String(255), nullable=True)
+    last_content_text = Column(Text, nullable=True)
     last_checked_at = Column(DateTime(timezone=True), nullable=True)
     active = Column(Boolean, nullable=False, default=True)
 
