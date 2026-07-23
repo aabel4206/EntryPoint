@@ -91,6 +91,9 @@ function App() {
   const [actionLoading, setActionLoading] = useState("");
   const [activeSection, setActiveSection] = useState("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [aiDemo, setAiDemo] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
 
   const unreadNotifications = useMemo(
     () => notifications.filter((notification) => !notification.is_read).length,
@@ -279,6 +282,46 @@ function App() {
       showStatus(error.message, "error");
     } finally {
       setActionLoading("");
+    }
+  }
+
+  async function runAiSummaryDemo() {
+    setAiLoading(true);
+    setAiError("");
+    setAiDemo(null);
+
+    try {
+      const data = await request(
+        `${API_BASE}/api/monitoring/local-ai-summary-demo`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            page_title: "Bobcat Shuttle Route 10",
+            old_text:
+              "Route 10 runs every 15 minutes and operates until 10:00 PM.",
+            new_text:
+              "Route 10 runs every 30 minutes and operates until 8:00 PM.",
+            category_name: "Transportation",
+            student_type: "Undergraduate",
+            major: "Computer Science",
+            is_international: true,
+          }),
+        }
+      );
+
+      setAiDemo(data);
+      showStatus("Personalized local-AI notification generated.");
+    } catch (error) {
+      const message =
+        error.message || "Unable to generate the AI notification.";
+
+      setAiError(message);
+      showStatus(message, "error");
+    } finally {
+      setAiLoading(false);
     }
   }
 
@@ -792,6 +835,124 @@ function App() {
             </div>
           </div>
 
+          <div className="ai-demo-panel">
+            <div className="ai-demo-copy">
+              <span className="panel-label">Presentation-ready AI demo</span>
+              <h3>Generate a personalized transportation alert</h3>
+              <p>
+                This controlled example demonstrates the complete EntryPoint
+                workflow: a webpage changes, Gemma summarizes the factual
+                update, and the notification layer explains why it matters to
+                the student and recommends a next step.
+              </p>
+
+              <div className="ai-demo-scenario">
+                <span>Demo scenario</span>
+                <strong>
+                  Route 10 changes from every 15 minutes until 10:00 PM to
+                  every 30 minutes until 8:00 PM.
+                </strong>
+              </div>
+
+              <button
+                type="button"
+                className="button button-primary"
+                onClick={runAiSummaryDemo}
+                disabled={aiLoading}
+              >
+                {aiLoading
+                  ? "Generating personalized alert…"
+                  : "Run Local AI Demo"}
+              </button>
+            </div>
+
+            <div className="ai-demo-result">
+              {!aiDemo && !aiError && (
+                <div className="ai-demo-placeholder">
+                  <div className="empty-state-icon">✦</div>
+                  <h3>AI result will appear here</h3>
+                  <p>
+                    Run the demo to generate a factual summary and a
+                    personalized student notification using local AI.
+                  </p>
+                </div>
+              )}
+
+              {aiLoading && (
+                <div className="ai-demo-placeholder">
+                  <div className="ai-loading-spinner" aria-hidden="true" />
+                  <h3>Gemma is analyzing the change</h3>
+                  <p>
+                    The model is running locally through Ollama. This may take
+                    a few seconds.
+                  </p>
+                </div>
+              )}
+
+              {aiError && !aiLoading && (
+                <div className="ai-error-message" role="alert">
+                  <strong>AI demo unavailable</strong>
+                  <span>{aiError}</span>
+                </div>
+              )}
+
+              {aiDemo && !aiLoading && (
+                <article className="ai-notification-card">
+                  <div className="ai-notification-header">
+                    <div>
+                      <span className="ai-badge">EntryPoint AI Assistant</span>
+                      <h3>{aiDemo.page_title}</h3>
+                    </div>
+
+                    <span className="local-ai-status">
+                      <span aria-hidden="true" />
+                      Local AI
+                    </span>
+                  </div>
+
+                  <div className="ai-notification-section">
+                    <span className="ai-section-label">Factual AI summary</span>
+                    <p>{aiDemo.summary}</p>
+                  </div>
+
+                  <div className="ai-notification-section">
+                    <span className="ai-section-label">
+                      Personalized notification
+                    </span>
+                    <p className="personalized-message">
+                      {aiDemo.personalized_notification}
+                    </p>
+                  </div>
+
+                  {aiDemo.student_context && (
+                    <div className="student-context">
+                      <span>{aiDemo.student_context.student_type}</span>
+
+                      {aiDemo.student_context.major && (
+                        <span>{aiDemo.student_context.major}</span>
+                      )}
+
+                      {aiDemo.student_context.is_international && (
+                        <span>International student</span>
+                      )}
+
+                      <span>
+                        Subscribed to {
+                          aiDemo.student_context.subscribed_category
+                        }
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="ai-notification-footer">
+                    <span>Generated locally with {aiDemo.model}</span>
+                    <span>Powered by Ollama</span>
+                  </div>
+                </article>
+              )}
+            </div>
+          </div>
+
           {monitoredPages.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">◎</div>
@@ -969,7 +1130,7 @@ function App() {
                       <time>{formatDate(notification.created_at)}</time>
                     </div>
 
-                    <p>{notification.message}</p>
+                    <p className="notification-message">{notification.message}</p>
 
                     <span className="notification-category">
                       Personalized student alert
